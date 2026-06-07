@@ -1,0 +1,15 @@
+{
+  "vendor": "NVIDIA",
+  "model": "L40S 48G",
+  "category": "GPU",
+  "source": "NVIDIA L40S Datasheet",
+  "reference_url": "https://www.nvidia.com/en-us/data-center/l40s/",
+  "specs": {
+    "architecture": "Ada Lovelace",
+    "memory_gb": 48,
+    "memory_bandwidth_gb_s": 864,
+    "tdp_w": 350,
+    "form_factor": "PCIe"
+  },
+  "price_cny": null
+}

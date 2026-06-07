@@ -1,0 +1,15 @@
+{
+  "vendor": "NVIDIA",
+  "model": "Spectrum-4 SN5600",
+  "category": "SWITCH",
+  "source": "NVIDIA Spectrum-4 Ethernet Switch",
+  "reference_url": "https://www.nvidia.com/en-us/networking/ethernet-switching/spectrum-sn5600/",
+  "specs": {
+    "ports": 64,
+    "port_speed_gbps": 800,
+    "aggregate_tb_s": 51.2,
+    "technology": "Ethernet 800GbE",
+    "form_factor": "2U"
+  },
+  "price_cny": null
+}

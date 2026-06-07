@@ -90,3 +90,26 @@ class CalculateCostResponse(BaseModel):
 
 class ProjectDetailRead(ProjectRead):
     bom: list[ProjectBOMRead] = Field(default_factory=list)
+
+
+class PlanTradeOffItem(BaseModel):
+    plan_id: str
+    headline: str
+    trade_offs: list[str] = Field(default_factory=list)
+    failure_boundary: str
+    tco_sensitivity: dict[str, Any] = Field(default_factory=dict)
+    convergence_ratio: str
+    network_technology: str
+    mfu_relative: float
+    cost_breakdown: dict[str, float] = Field(default_factory=dict)
+    hardware_capex: float
+    tco_5y: float
+    tco_breakdown: dict[str, float] = Field(default_factory=dict)
+    recommended: bool = False
+
+
+class MultiPlanResponse(BaseModel):
+    project_id: UUID
+    electricity_price_cny_per_kwh: float
+    pue: float
+    plans: list[PlanTradeOffItem]

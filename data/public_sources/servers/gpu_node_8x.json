@@ -1,0 +1,14 @@
+{
+  "vendor": "Generic",
+  "model": "8-GPU Training Node",
+  "category": "SERVER",
+  "source": "Industry reference — 4U dual-socket GPU server form factor",
+  "reference_url": null,
+  "specs": {
+    "rack_units": 4,
+    "gpus_per_node": 8,
+    "platform_overhead_w": 500,
+    "cooling": "air"
+  },
+  "price_cny": null
+}

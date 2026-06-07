@@ -1,0 +1,16 @@
+{
+  "vendor": "NVIDIA",
+  "model": "H800 80G",
+  "category": "GPU",
+  "source": "Lenovo ThinkSystem NVIDIA H800 PCIe User Guide",
+  "reference_url": "https://www.nvidia.com/en-us/data-center/h100/",
+  "specs": {
+    "architecture": "Hopper",
+    "memory_gb": 80,
+    "memory_bandwidth_tb_s": 2.0,
+    "nvlink_gbps": 400,
+    "tdp_w": 350,
+    "form_factor": "PCIe"
+  },
+  "price_cny": null
+}

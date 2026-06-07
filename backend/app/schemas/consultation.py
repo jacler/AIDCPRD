@@ -34,6 +34,13 @@ class ExtractedRequirements(BaseModel):
     scheme_summary: str | None = None
 
 
+class DiagnosticQuestion(BaseModel):
+    slot_key: str
+    text: str
+    engineering_constraint: str
+    engineering_purpose: str
+
+
 class ConsultationChatResponse(BaseModel):
     session_id: str
     reply: str
@@ -42,6 +49,10 @@ class ConsultationChatResponse(BaseModel):
     extracted: ExtractedRequirements | None = None
     messages: list[ConsultationMessage] = Field(default_factory=list)
     engine: str = "rule"
+    intent: str | None = None
+    intent_confidence: float | None = None
+    needs_clarification: bool = False
+    diagnostic_questions: list[DiagnosticQuestion] = Field(default_factory=list)
 
 
 class UpdateTopologyRequest(BaseModel):

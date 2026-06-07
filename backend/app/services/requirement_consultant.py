@@ -11,6 +11,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.core.exceptions import ValidationError
+from app.planner.engine import ConsultationPlanner
+from app.planner.intent_classifier import Intent
+from app.planner.slot_parser import enrich_slots_from_message
 from app.schemas.consultation import (
     ConsultationChatResponse,
     ConsultationMessage,
@@ -27,6 +30,55 @@ from app.services.consultation_config import (
 )
 
 _sessions: dict[str, ConsultationSession] = {}
+_planner = ConsultationPlanner()
+
+
+def _intent_to_scenario(intent_value: str | None) -> ProjectScenario | None:
+    if intent_value in (Intent.PRETRAIN.value, Intent.SFT.value, Intent.RLHF.value):
+        return ProjectScenario.TRAINING
+    if intent_value == Intent.INFERENCE.value:
+        return ProjectScenario.INFERENCE
+    return None
+
+
+def _planner_context_lines(slots: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
+    if slots.get("industry") == "healthcare":
+        lines.append("已识别为**医疗行业**场景，将优先考虑推理负载、数据合规与存储冗余。")
+    elif slots.get("industry"):
+        lines.append(f"已识别行业标签：{slots['industry']}。")
+    if slots.get("compute_pflops"):
+        lines.append(
+            f"目标算力约 **{slots['compute_pflops']}P**，"
+            f"折算建议 GPU 规模约 **{slots.get('target_gpus', '—')} 张**。"
+        )
+    elif slots.get("target_gpus"):
+        lines.append(f"目标 GPU 数量：**{slots['target_gpus']} 张**。")
+    if slots.get("scenario"):
+        scenario_cn = {
+            ProjectScenario.TRAINING: "训练",
+            ProjectScenario.INFERENCE: "推理",
+            ProjectScenario.MIXED: "训推混合",
+        }
+        sc = slots["scenario"]
+        if isinstance(sc, ProjectScenario):
+            lines.append(f"应用场景：**{scenario_cn.get(sc, sc.value)}**。")
+    if slots.get("compliance"):
+        lines.append(f"合规要求：{slots['compliance']}。")
+    if slots.get("token_scale_monthly"):
+        lines.append(f"已记录月 Token 规模：**{slots['token_scale_monthly']}**。")
+    if slots.get("parallel_strategy"):
+        label = (
+            "数据并行"
+            if slots["parallel_strategy"] == "data_parallel"
+            else "模型/流水线并行"
+        )
+        lines.append(f"并行策略：**{label}**。")
+    if slots.get("inference_qps_peak"):
+        lines.append(f"推理峰值 QPS：**{slots['inference_qps_peak']}**。")
+    if slots.get("latency_p99_ms"):
+        lines.append(f"P99 延迟目标：**{slots['latency_p99_ms']} ms**。")
+    return lines
 
 
 @dataclass
@@ -468,29 +520,30 @@ class RequirementConsultant:
         _append_user_message(session, message)
 
         _extract_from_text(message, session.slots)
+        enrich_slots_from_message(message, session.slots)
 
-        if session.slots.get("scenario") is None and session.slots.get("industry"):
-            session.slots["scenario"] = _industry_default_scenario(session.slots["industry"])
+        if session.slots.get("scenario") is None:
+            mapped = _intent_to_scenario(session.slots.get("intent"))
+            if mapped:
+                session.slots["scenario"] = mapped
+            elif session.slots.get("industry"):
+                session.slots["scenario"] = _industry_default_scenario(session.slots["industry"])
 
-        questions = _missing_questions(session.slots, session.asked)
-        ready = len(questions) == 0 and session.slots.get("target_gpus") is not None
+        turn = _planner.plan_turn(
+            message,
+            session.slots,
+            session.asked,
+            context_lines=_planner_context_lines(session.slots),
+        )
+        session.asked.update(turn.asked_keys)
 
-        for q in questions:
-            if "算力" in q or "GPU" in q:
-                session.asked.add("gpus")
-            elif "场景" in q:
-                session.asked.add("scenario")
-            elif "行业" in q:
-                session.asked.add("industry")
-            elif "等保" in q or "国产化" in q:
-                session.asked.add("compliance")
-            elif "每节点" in q:
-                session.asked.add("gpus_per_node")
+        ready = turn.ready and session.slots.get("target_gpus") is not None
+        questions = turn.questions
 
         if ready:
             _enrich_scheme(session.slots)
 
-        reply = _build_reply(session.slots, questions, ready)
+        reply = turn.reply
         if engine_hint and not any(m.role == "assistant" for m in session.messages):
             reply = f"{engine_hint}\n\n{reply}"
         session.messages.append(ConsultationMessage(role="assistant", content=reply))
@@ -505,6 +558,10 @@ class RequirementConsultant:
             extracted=extracted,
             messages=session.messages,
             engine="rule",
+            intent=turn.classification.intent.value,
+            intent_confidence=turn.classification.confidence,
+            needs_clarification=turn.classification.needs_clarification,
+            diagnostic_questions=turn.diagnostic_questions,
         )
 
     async def _chat_with_llm(

@@ -1,0 +1,47 @@
+{
+  "source": "公开产品对照（非内部报价数据）",
+  "replacements": [
+    {
+      "original_vendor": "NVIDIA",
+      "original_model": "H800 80G",
+      "domestic_vendor": "Huawei",
+      "domestic_model": "Ascend 910B",
+      "public_source": "Huawei Ascend 910 Series public documentation"
+    },
+    {
+      "original_vendor": "NVIDIA",
+      "original_model": "H100 SXM 80G",
+      "domestic_vendor": "Huawei",
+      "domestic_model": "Ascend 910C",
+      "public_source": "Huawei Ascend 910 Series public documentation"
+    },
+    {
+      "original_vendor": "NVIDIA",
+      "original_model": "A100 SXM 80G",
+      "domestic_vendor": "Huawei",
+      "domestic_model": "Ascend 910B",
+      "public_source": "Huawei Ascend 910 Series public documentation"
+    },
+    {
+      "original_vendor": "Mellanox",
+      "original_model": "QM9700 Leaf",
+      "domestic_vendor": "Huawei",
+      "domestic_model": "CloudEngine 16800",
+      "public_source": "Huawei CloudEngine datacenter switch public catalog"
+    },
+    {
+      "original_vendor": "Mellanox",
+      "original_model": "QM9700 Spine",
+      "domestic_vendor": "Ruijie",
+      "domestic_model": "RG-S6980-64QC 400G",
+      "public_source": "Ruijie RG-S6980 Series public documentation"
+    },
+    {
+      "original_vendor": "Dell",
+      "original_model": "PowerScale F900",
+      "domestic_vendor": "Huawei",
+      "domestic_model": "OceanStor Pacific 9920",
+      "public_source": "Huawei OceanStor Pacific public documentation"
+    }
+  ]
+}

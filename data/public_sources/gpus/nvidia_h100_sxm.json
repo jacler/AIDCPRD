@@ -1,0 +1,16 @@
+{
+  "vendor": "NVIDIA",
+  "model": "H100 SXM 80G",
+  "category": "GPU",
+  "source": "NVIDIA H100 Tensor Core GPU Datasheet",
+  "reference_url": "https://www.nvidia.com/en-us/data-center/h100/",
+  "specs": {
+    "architecture": "Hopper",
+    "memory_gb": 80,
+    "memory_bandwidth_tb_s": 3.35,
+    "nvlink_gbps": 900,
+    "tdp_w": 700,
+    "form_factor": "SXM5"
+  },
+  "price_cny": null
+}

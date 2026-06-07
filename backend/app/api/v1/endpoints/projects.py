@@ -8,11 +8,14 @@ from app.core.deps import get_current_user
 from app.core.exceptions import NotFoundError
 from app.models.user import User
 from app.repositories.project_repository import ProjectRepository
+from app.planner.multi_plan import build_multi_plans
 from app.schemas.api import (
     CalculateCostRequest,
     CalculateCostResponse,
     GenerateTopologyRequest,
     GenerateTopologyResponse,
+    MultiPlanResponse,
+    PlanTradeOffItem,
     ProjectDetailRead,
 )
 from app.schemas.consultation import UpdateTopologyRequest
@@ -120,6 +123,43 @@ async def update_topology(
 ) -> GenerateTopologyResponse:
     service = ProjectService(db)
     return await service.update_topology_manual(project_id, payload)
+
+
+@router.get("/{project_id}/multi-plan", response_model=MultiPlanResponse)
+async def get_multi_plan(
+    project_id: UUID,
+    electricity_price: float = Query(default=0.8, ge=0.1, le=5.0, description="电价 元/kWh"),
+    pue: float = Query(default=1.3, ge=1.0, le=2.5),
+    _: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> MultiPlanResponse:
+    repo = ProjectRepository(db)
+    project = await repo.get_by_id(project_id)
+    if project is None:
+        raise NotFoundError(f"Project {project_id} not found")
+
+    breakdown = project.cost_breakdown_json
+    if breakdown and "total" not in breakdown:
+        breakdown = {
+            **breakdown,
+            "total": sum(float(breakdown.get(k, 0)) for k in ("COMPUTE", "NETWORK", "STORAGE", "SOFTWARE", "INFRA")),
+        }
+
+    raw_plans = build_multi_plans(
+        cost_breakdown=breakdown,
+        target_gpus=project.target_gpus,
+        topology=project.topology_json,
+        scenario=project.scenario.value,
+        electricity_price_cny_per_kwh=electricity_price,
+        pue=pue,
+    )
+
+    return MultiPlanResponse(
+        project_id=project_id,
+        electricity_price_cny_per_kwh=electricity_price,
+        pue=pue,
+        plans=[PlanTradeOffItem.model_validate(p) for p in raw_plans],
+    )
 
 
 @router.post("/{project_id}/calculate-cost", response_model=CalculateCostResponse)

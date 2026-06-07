@@ -1,0 +1,12 @@
+{
+  "model": "Standard 42U Rack",
+  "source": "EIA-310-D rack standard (public reference)",
+  "reference_url": null,
+  "specs": {
+    "rack_units": 42,
+    "usable_power_kw_air": 15.0,
+    "usable_power_kw_liquid": 50.0,
+    "pdu_positions": ["bottom_rear", "vertical_0u_side"],
+    "default_cooling": "air"
+  }
+}

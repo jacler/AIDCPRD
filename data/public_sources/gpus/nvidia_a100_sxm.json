@@ -1,0 +1,16 @@
+{
+  "vendor": "NVIDIA",
+  "model": "A100 SXM 80G",
+  "category": "GPU",
+  "source": "NVIDIA A100 Tensor Core GPU Datasheet",
+  "reference_url": "https://www.nvidia.com/en-us/data-center/a100/",
+  "specs": {
+    "architecture": "Ampere",
+    "memory_gb": 80,
+    "memory_bandwidth_tb_s": 2.039,
+    "nvlink_gbps": 600,
+    "tdp_w": 400,
+    "form_factor": "SXM4"
+  },
+  "price_cny": null
+}

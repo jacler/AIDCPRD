@@ -1,0 +1,14 @@
+{
+  "vendor": "Arista",
+  "model": "7800R3-48CQ",
+  "category": "SWITCH",
+  "source": "Arista 7800R3 Series Datasheet",
+  "reference_url": "https://www.arista.com/en/products/7800r3-series",
+  "specs": {
+    "ports": 48,
+    "port_speed_gbps": 400,
+    "technology": "Ethernet 400GbE",
+    "form_factor": "4U modular"
+  },
+  "price_cny": null
+}

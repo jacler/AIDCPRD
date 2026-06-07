@@ -1,17 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Hexagon, Save, Upload } from "lucide-react";
+import { useState } from "react";
+import { ChevronRight, FileText, Hexagon, Save, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { downloadTechnicalProposal } from "@/lib/api/export";
 import { exportBomToCsv } from "@/lib/export-bom";
 import { useProjectStore } from "@/lib/stores/project-store";
 
 export function DesignerHeader() {
   const project = useProjectStore((s) => s.project);
   const bom = useProjectStore((s) => s.bom);
+  const topology = useProjectStore((s) => s.topology);
   const saveProject = useProjectStore((s) => s.saveProject);
   const isSaving = useProjectStore((s) => s.isSaving);
+  const [exportingDoc, setExportingDoc] = useState(false);
 
   if (!project) return null;
 
@@ -42,6 +46,18 @@ export function DesignerHeader() {
         >
           <Save className="h-4 w-4" />
           {isSaving ? "保存中…" : "保存"}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!topology || exportingDoc}
+          onClick={() => {
+            setExportingDoc(true);
+            void downloadTechnicalProposal(project.id).finally(() => setExportingDoc(false));
+          }}
+        >
+          <FileText className="h-4 w-4" />
+          {exportingDoc ? "生成中…" : "技术方案书"}
         </Button>
         <Button
           size="sm"

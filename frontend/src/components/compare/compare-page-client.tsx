@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { CompliancePanel } from "@/components/compare/compliance-panel";
+import { TradeOffMatrix } from "@/components/compare/trade-off-matrix";
 import { CostWaterfall } from "@/components/CostWaterfall";
 import { RadarCompare } from "@/components/RadarCompare";
 import { MainNav } from "@/components/layout/main-nav";
@@ -58,7 +60,9 @@ export function ComparePageClient({ projectId }: ComparePageClientProps) {
               <span className="text-sm text-muted-foreground">{project.target_gpus} GPU</span>
             </div>
             <h1 className="text-xl font-bold">{project.name}</h1>
-            <p className="text-sm text-muted-foreground">全 IB 方案 vs RoCE 方案 · 5 维对比</p>
+            <p className="text-sm text-muted-foreground">
+              三档方案权衡 · 5 年 TCO · 5 维雷达对比
+            </p>
           </div>
           <Button variant="outline" size="sm" asChild>
             <Link
@@ -71,7 +75,13 @@ export function ComparePageClient({ projectId }: ComparePageClientProps) {
           </Button>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <TradeOffMatrix projectId={projectId} />
+
+        <div className="mt-6">
+          <CompliancePanel projectId={projectId} />
+        </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <Card className="border-blue-200/60 shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">

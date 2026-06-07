@@ -1,0 +1,15 @@
+{
+  "vendor": "AMD",
+  "model": "Instinct MI300X 192G",
+  "category": "GPU",
+  "source": "AMD Instinct MI300X Data Sheet",
+  "reference_url": "https://www.amd.com/en/products/accelerators/instinct/mi300.html",
+  "specs": {
+    "architecture": "CDNA3",
+    "memory_gb": 192,
+    "memory_bandwidth_tb_s": 5.3,
+    "tdp_w": 750,
+    "form_factor": "OAM"
+  },
+  "price_cny": null
+}

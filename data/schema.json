@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IDC Architecture Expert System V2",
+  "version": "2.0.0",
+  "definitions": {
+    "IntentType": {
+      "type": "string",
+      "enum": ["pretrain", "sft", "rlhf", "inference", "general"]
+    },
+    "IntentClassification": {
+      "type": "object",
+      "required": ["intent", "confidence", "needs_clarification"],
+      "properties": {
+        "intent": { "$ref": "#/definitions/IntentType" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "needs_clarification": { "type": "boolean" },
+        "clarification_hints": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "DiagnosticQuestion": {
+      "type": "object",
+      "required": ["slot_key", "text", "engineering_constraint", "engineering_purpose"],
+      "properties": {
+        "slot_key": { "type": "string" },
+        "text": { "type": "string" },
+        "engineering_constraint": { "type": "string" },
+        "engineering_purpose": { "type": "string" }
+      }
+    },
+    "ConsultationTurn": {
+      "type": "object",
+      "properties": {
+        "intent": { "$ref": "#/definitions/IntentClassification" },
+        "diagnostic_questions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/DiagnosticQuestion" }
+        },
+        "ready_to_generate": { "type": "boolean" }
+      }
+    },
+    "PlanTradeOff": {
+      "type": "object",
+      "required": ["plan_id", "headline", "trade_offs", "failure_boundary", "tco_sensitivity"],
+      "properties": {
+        "plan_id": { "type": "string" },
+        "headline": { "type": "string" },
+        "trade_offs": { "type": "array", "items": { "type": "string" } },
+        "failure_boundary": { "type": "string" },
+        "tco_sensitivity": {
+          "type": "object",
+          "properties": {
+            "variable": { "type": "string" },
+            "impact_pct": { "type": "number" }
+          }
+        },
+        "hardware_capex": { "type": "number" },
+        "tco_5y": { "type": "number" },
+        "convergence_ratio": { "type": "string" },
+        "network_technology": { "type": "string" }
+      }
+    },
+    "ComplianceChecklistItem": {
+      "type": "object",
+      "required": ["item_id", "title", "status", "remediation", "regulation_ref"],
+      "properties": {
+        "item_id": { "type": "string" },
+        "title": { "type": "string" },
+        "status": { "type": "string", "enum": ["pass", "warn", "fail"] },
+        "status_icon": { "type": "string" },
+        "remediation": { "type": "string" },
+        "regulation_ref": { "type": "string" },
+        "engineering_note": { "type": "string" }
+      }
+    },
+    "CompatibilityGap": {
+      "type": "object",
+      "properties": {
+        "framework": { "type": "string" },
+        "target_stack": { "type": "string" },
+        "status": { "type": "string" },
+        "compatibility_gap": { "type": "string" },
+        "remediation": { "type": "string" }
+      }
+    },
+    "TCOBreakdown": {
+      "type": "object",
+      "properties": {
+        "hardware_capex": { "type": "number" },
+        "implementation": { "type": "number" },
+        "electricity_annual": { "type": "number" },
+        "maintenance_annual": { "type": "number" },
+        "total_5y": { "type": "number" },
+        "total_power_kw": { "type": "number" }
+      }
+    },
+    "PublicHardwareRecord": {
+      "type": "object",
+      "required": ["vendor", "model", "category", "source"],
+      "properties": {
+        "vendor": { "type": "string" },
+        "model": { "type": "string" },
+        "category": { "type": "string", "enum": ["GPU", "SWITCH", "OPTIC", "STORAGE"] },
+        "source": { "type": "string" },
+        "reference_url": { "type": ["string", "null"] },
+        "specs": { "type": "object" },
+        "price_cny": { "type": ["number", "null"] }
+      }
+    },
+    "TopologyVisualization": {
+      "type": "object",
+      "required": ["convergence_ratio", "compute_network_svg", "storage_network_svg"],
+      "properties": {
+        "convergence_ratio": { "type": "string" },
+        "compute_network_svg": { "type": "string" },
+        "storage_network_svg": { "type": "string" },
+        "cabinet_layout_svg": { "type": "string" },
+        "optic_links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from_node": { "type": "string" },
+              "to_node": { "type": "string" },
+              "optic_type": { "type": "string", "enum": ["DAC", "SR4", "LR4"] },
+              "fiber_type": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "CabinetLayout": {
+      "type": "object",
+      "properties": {
+        "total_racks": { "type": "integer" },
+        "total_power_kw": { "type": "number" },
+        "power_limit_kw_per_rack": { "type": "number" },
+        "cooling_method": { "type": "string" },
+        "warnings": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "TechnicalProposalExport": {
+      "type": "object",
+      "properties": {
+        "sections": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "项目背景、需求诊断、拓扑设计、方案权衡、BOM、合规自查、数据来源声明"
+        },
+        "disclaimer": { "type": "string" }
+      }
+    }
+  }
+}

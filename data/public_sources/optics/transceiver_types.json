@@ -1,0 +1,27 @@
+{
+  "source": "IEEE 802.3 / MSA 400G transceiver classifications (public summaries)",
+  "reference_url": null,
+  "modules": [
+    {
+      "type": "DAC",
+      "label": "DAC 铜缆",
+      "max_reach_m": 3,
+      "use_case": "server_to_leaf_same_rack",
+      "fiber_type": null
+    },
+    {
+      "type": "SR4",
+      "label": "400G SR4 (OM4)",
+      "max_reach_m": 100,
+      "use_case": "leaf_to_spine_intra_dc",
+      "fiber_type": "OM4 MMF"
+    },
+    {
+      "type": "LR4",
+      "label": "400G LR4 (SMF)",
+      "max_reach_m": 10000,
+      "use_case": "leaf_to_spine_inter_dc",
+      "fiber_type": "SMF"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "vendor": "NVIDIA",
+  "model": "Quantum-2 QM9700",
+  "category": "SWITCH",
+  "source": "NVIDIA Quantum-2 InfiniBand Platform",
+  "reference_url": "https://www.nvidia.com/en-us/networking/quantum2/",
+  "specs": {
+    "ports": 64,
+    "port_speed_gbps": 400,
+    "aggregate_tb_s": 51.2,
+    "technology": "NDR InfiniBand",
+    "form_factor": "1U"
+  },
+  "price_cny": null
+}

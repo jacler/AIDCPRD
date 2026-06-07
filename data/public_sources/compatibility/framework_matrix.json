@@ -1,0 +1,68 @@
+{
+  "source": "公开生态兼容性参考（非厂商内部数据）",
+  "reference_note": "框架与加速卡适配状态来自各厂商公开开发者文档摘要，实施前需以官方最新版本为准",
+  "frameworks": {
+    "pytorch": {
+      "nvidia": {
+        "status": "native",
+        "stack": "CUDA",
+        "min_version": "2.0"
+      },
+      "ascend": {
+        "status": "partial",
+        "stack": "CANN + torch_npu",
+        "compatibility_gap": "部分自定义算子与 CUDA 扩展需改写或替换",
+        "remediation": "使用昇腾 ModelZoo 算子库；关键算子做 NPU 适配评审"
+      },
+      "amd": {
+        "status": "supported",
+        "stack": "ROCm",
+        "min_version": "5.7"
+      }
+    },
+    "tensorflow": {
+      "nvidia": {
+        "status": "native",
+        "stack": "CUDA"
+      },
+      "ascend": {
+        "status": "limited",
+        "compatibility_gap": "TensorFlow 在昇腾上维护活跃度低于 MindSpore",
+        "remediation": "建议迁移至 MindSpore 或保留 TensorFlow 仅作 CPU 侧数据管道"
+      }
+    },
+    "mindspore": {
+      "ascend": {
+        "status": "native",
+        "stack": "CANN"
+      },
+      "nvidia": {
+        "status": "supported",
+        "stack": "CUDA",
+        "compatibility_gap": "部分 Ascend 专属算子不可直接迁移"
+      }
+    },
+    "deepspeed": {
+      "nvidia": {
+        "status": "native",
+        "stack": "CUDA"
+      },
+      "ascend": {
+        "status": "partial",
+        "compatibility_gap": "ZeRO-3 部分特性在 NPU 上需验证",
+        "remediation": "在昇腾环境执行 DeepSpeed 兼容矩阵回归测试"
+      }
+    },
+    "vllm": {
+      "nvidia": {
+        "status": "native",
+        "stack": "CUDA"
+      },
+      "ascend": {
+        "status": "partial",
+        "compatibility_gap": "vLLM 对昇腾支持仍在快速演进，生产需锁定版本",
+        "remediation": "优先评估 MindIE / 昇腾推理参考实现"
+      }
+    }
+  }
+}
