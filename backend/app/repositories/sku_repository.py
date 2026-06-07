@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.hardware import SKUCatalog, SKUCategory
@@ -10,6 +10,19 @@ from app.schemas.hardware import SKUCatalogCreate, SKUCatalogUpdate
 class SKURepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+
+    def _apply_filters(self, query, *, category: SKUCategory | None, search: str | None):
+        if category is not None:
+            query = query.where(SKUCatalog.category == category)
+        if search:
+            pattern = f"%{search.strip().lower()}%"
+            query = query.where(
+                or_(
+                    func.lower(SKUCatalog.model).like(pattern),
+                    func.lower(SKUCatalog.vendor).like(pattern),
+                )
+            )
+        return query
 
     async def create(self, data: SKUCatalogCreate) -> SKUCatalog:
         sku = SKUCatalog(**data.model_dump())
@@ -41,15 +54,15 @@ class SKURepository:
         self,
         *,
         category: SKUCategory | None = None,
+        search: str | None = None,
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[SKUCatalog], int]:
         query = select(SKUCatalog)
         count_query = select(func.count()).select_from(SKUCatalog)
 
-        if category is not None:
-            query = query.where(SKUCatalog.category == category)
-            count_query = count_query.where(SKUCatalog.category == category)
+        query = self._apply_filters(query, category=category, search=search)
+        count_query = self._apply_filters(count_query, category=category, search=search)
 
         total = (await self.session.execute(count_query)).scalar_one()
         offset = (page - 1) * page_size
@@ -63,6 +76,20 @@ class SKURepository:
             select(SKUCatalog)
             .where(SKUCatalog.category == category)
             .order_by(SKUCatalog.created_at.asc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def find_by_identity(
+        self, category: SKUCategory, vendor: str, model: str
+    ) -> SKUCatalog | None:
+        result = await self.session.execute(
+            select(SKUCatalog)
+            .where(
+                SKUCatalog.category == category,
+                func.lower(SKUCatalog.vendor) == vendor.strip().lower(),
+                func.lower(SKUCatalog.model) == model.strip().lower(),
+            )
             .limit(1)
         )
         return result.scalar_one_or_none()

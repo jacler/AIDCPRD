@@ -29,6 +29,7 @@ from app.schemas.api import (
     TopologyCompute,
     TopologyNetwork,
 )
+from app.schemas.consultation import UpdateTopologyRequest
 from app.schemas.hardware import ProjectBOMRead, ProjectUpdate
 from app.services.cost_engine import calculate_5d_cost
 from app.services.topology_engine import generate_fat_tree_topology
@@ -99,6 +100,51 @@ class ProjectService:
             storage=storage,
             bom=bom,
             topology={**topology, "storage": storage.model_dump()},
+        )
+
+    async def update_topology_manual(
+        self, project_id: UUID, request: UpdateTopologyRequest
+    ) -> GenerateTopologyResponse:
+        project = await self.projects.get_by_id(project_id)
+        if project is None:
+            raise NotFoundError(f"Project {project_id} not found")
+
+        existing = project.topology_json or {}
+        compute = {**(existing.get("compute") or {}), **(request.compute or {})}
+        network = {**(existing.get("network") or {}), **(request.network or {})}
+        storage_raw = {**(existing.get("storage") or {}), **(request.storage or {})}
+
+        if not compute or not network:
+            raise ValidationError("拓扑数据不完整，需包含 compute 与 network")
+
+        scenario = request.scenario or project.scenario
+        storage_nodes = storage_raw.get("nodes") or _estimate_storage_nodes(
+            compute.get("servers", 1), scenario
+        )
+        storage = StoragePlane(nodes=storage_nodes)
+
+        topology = {"compute": compute, "network": network}
+        bom = await self._build_preliminary_bom(topology, storage_nodes)
+
+        payload: dict[str, Any] = {
+            **topology,
+            "storage": storage.model_dump(),
+            "manual_edit": True,
+        }
+        if request.graph_layout:
+            payload["graph_layout"] = request.graph_layout
+
+        await self.projects.update(
+            project,
+            ProjectUpdate(topology_json=payload, status=ProjectStatus.CALCULATING),
+        )
+
+        return GenerateTopologyResponse(
+            compute=TopologyCompute(**compute),
+            network=TopologyNetwork(**network),
+            storage=storage,
+            bom=bom,
+            topology=payload,
         )
 
     async def _build_preliminary_bom(

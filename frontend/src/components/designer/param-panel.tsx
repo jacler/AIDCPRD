@@ -2,6 +2,7 @@
 
 import { Loader2, Network } from "lucide-react";
 
+import { RequirementChat } from "@/components/designer/requirement-chat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,20 +12,36 @@ import { useProjectStore } from "@/lib/stores/project-store";
 import type { ProjectScenario } from "@/types";
 
 export function ParamPanel() {
+  const project = useProjectStore((s) => s.project);
   const params = useProjectStore((s) => s.params);
   const topology = useProjectStore((s) => s.topology);
   const setParams = useProjectStore((s) => s.setParams);
+  const applyExtractedAndGenerateTopology = useProjectStore(
+    (s) => s.applyExtractedAndGenerateTopology
+  );
+  const updateTopologyCounts = useProjectStore((s) => s.updateTopologyCounts);
+  const saveTopologyManual = useProjectStore((s) => s.saveTopologyManual);
   const runGenerateTopology = useProjectStore((s) => s.runGenerateTopology);
   const isGenerating = useProjectStore((s) => s.isGenerating);
+  const isSavingTopology = useProjectStore((s) => s.isSavingTopology);
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-background">
-      <div className="border-b px-4 py-4">
-        <h2 className="text-sm font-semibold">参数配置</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">调整集群规模与网络参数</p>
+    <div className="flex h-full flex-col min-h-0 bg-background">
+      <div className="shrink-0 p-2">
+        <RequirementChat
+          compact
+          projectId={project?.id}
+          onApplyAndGenerate={applyExtractedAndGenerateTopology}
+        />
       </div>
 
-      <div className="space-y-4 p-4">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="border-b px-4 py-3">
+          <h2 className="text-sm font-semibold">参数配置</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">调整集群规模与网络参数</p>
+        </div>
+
+        <div className="space-y-4 p-4">
         <div className="space-y-1.5">
           <Label htmlFor="target_gpus" className="text-xs">
             目标 GPU 数量
@@ -92,13 +109,6 @@ export function ParamPanel() {
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="network_arch" className="text-xs">Network Arch</Label>
-          <Select id="network_arch" className="h-9" value={params.network_arch} disabled>
-            <option value="FAT_TREE">FAT_TREE</option>
-          </Select>
-        </div>
-
         <label className="flex items-center gap-2 text-xs cursor-pointer">
           <input
             type="checkbox"
@@ -128,30 +138,50 @@ export function ParamPanel() {
       {topology && (
         <>
           <Separator />
-          <div className="p-4">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-              拓扑摘要
+          <div className="p-4 space-y-3">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              拓扑摘要（可手动调整）
             </h3>
-            <dl className="space-y-2 text-sm">
+            <div className="grid grid-cols-2 gap-2">
               {[
-                ["计算节点", `${topology.compute.servers} 台`],
-                ["每节点 GPU", `${params.gpus_per_node} 张`],
-                ["总 GPU", `${topology.compute.gpus} 张`],
-                ["Leaf 交换机", `${topology.network.leaf_switches} 台`],
-                ["Spine 交换机", `${topology.network.spine_switches} 台`],
-                ["400G 光模块", `${topology.network.optics_400g} 个`],
-                ["存储节点", `${topology.storage.nodes} 个`],
-                ["网络架构", params.network_arch],
-              ].map(([k, v]) => (
-                <div key={k} className="flex justify-between">
-                  <dt className="text-muted-foreground">{k}</dt>
-                  <dd className="font-medium">{v}</dd>
+                { key: "servers", label: "计算节点", value: topology.compute.servers },
+                { key: "gpus", label: "总 GPU", value: topology.compute.gpus },
+                { key: "leaf", label: "Leaf", value: topology.network.leaf_switches },
+                { key: "spine", label: "Spine", value: topology.network.spine_switches },
+                { key: "storage", label: "存储节点", value: topology.storage.nodes },
+              ].map((item) => (
+                <div key={item.key} className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">{item.label}</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    className="h-8 text-xs"
+                    value={item.value}
+                    onChange={(e) => {
+                      const v = Number(e.target.value) || 1;
+                      if (item.key === "servers") updateTopologyCounts({ servers: v });
+                      if (item.key === "gpus") updateTopologyCounts({ gpus: v });
+                      if (item.key === "leaf") updateTopologyCounts({ leaf_switches: v });
+                      if (item.key === "spine") updateTopologyCounts({ spine_switches: v });
+                      if (item.key === "storage") updateTopologyCounts({ storage_nodes: v });
+                    }}
+                  />
                 </div>
               ))}
-            </dl>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              disabled={isSavingTopology}
+              onClick={() => void saveTopologyManual()}
+            >
+              {isSavingTopology ? "保存中…" : "应用数量修改并更新 BOM"}
+            </Button>
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }

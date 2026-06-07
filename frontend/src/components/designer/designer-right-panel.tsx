@@ -40,9 +40,12 @@ export function DesignerRightPanel({ projectId }: DesignerRightPanelProps) {
           ← 返回项目列表
         </Link>
         <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
-          <Link href={`/projects/${projectId}/compare`}>
+          <Link
+            href={`/projects/${projectId}/compare`}
+            className="inline-flex items-center gap-1.5"
+          >
             <Expand className="h-3 w-3" />
-            方案 PK
+            <span>方案 PK</span>
           </Link>
         </Button>
       </div>

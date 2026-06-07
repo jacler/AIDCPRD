@@ -74,6 +74,31 @@ class SKUCatalogBatchImport(BaseModel):
     items: list[SKUCatalogCreate]
 
 
+class SkuAiSuggestRequest(BaseModel):
+    requirement: str = Field(..., min_length=3, max_length=4000)
+    extracted: dict[str, Any] | None = None
+    import_to_catalog: bool = True
+
+
+class SkuAiSuggestItem(BaseModel):
+    category: str
+    vendor: str
+    model: str
+    specs_json: dict[str, Any] = Field(default_factory=dict)
+    base_price: str
+    channel_price: str | None = None
+    cost_dimension: str
+    rationale: str = ""
+
+
+class SkuAiSuggestResponse(BaseModel):
+    items: list[SkuAiSuggestItem] = Field(default_factory=list)
+    imported: list[SKUCatalogRead] = Field(default_factory=list)
+    skipped: list[SKUCatalogRead] = Field(default_factory=list)
+    note: str = ""
+    engine: str = "rule"
+
+
 class ProjectBase(BaseModel):
     name: str = Field(..., max_length=256)
     target_gpus: int = Field(..., gt=0)

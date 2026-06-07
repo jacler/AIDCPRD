@@ -83,3 +83,27 @@ export async function calculateCost(
     }
   );
 }
+
+export interface UpdateTopologyPayload {
+  compute?: { servers: number; gpus: number };
+  network?: {
+    leaf_switches: number;
+    spine_switches: number;
+    rdma_nics: number;
+    dac_cables: number;
+    optics_400g: number;
+  };
+  storage?: { nodes: number };
+  graph_layout?: {
+    nodes: { id: string; position: { x: number; y: number } }[];
+    edges?: { id: string; source: string; target: string }[];
+  };
+  scenario?: ProjectScenario;
+}
+
+export async function updateTopology(projectId: string, payload: UpdateTopologyPayload) {
+  return apiFetch<GenerateTopologyResponse>(`/api/v1/projects/${projectId}/topology`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}

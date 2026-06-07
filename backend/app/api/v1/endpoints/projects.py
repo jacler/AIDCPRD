@@ -4,7 +4,9 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.deps import get_current_user
 from app.core.exceptions import NotFoundError
+from app.models.user import User
 from app.repositories.project_repository import ProjectRepository
 from app.schemas.api import (
     CalculateCostRequest,
@@ -13,6 +15,7 @@ from app.schemas.api import (
     GenerateTopologyResponse,
     ProjectDetailRead,
 )
+from app.schemas.consultation import UpdateTopologyRequest
 from app.schemas.hardware import (
     PaginatedResponse,
     ProjectBOMRead,
@@ -29,6 +32,7 @@ router = APIRouter(prefix="/projects", tags=["Projects"])
 async def list_projects(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    _: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> PaginatedResponse:
     repo = ProjectRepository(db)
@@ -44,6 +48,7 @@ async def list_projects(
 @router.post("", response_model=ProjectRead, status_code=201)
 async def create_project(
     payload: ProjectCreate,
+    _: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ProjectRead:
     repo = ProjectRepository(db)
@@ -54,6 +59,7 @@ async def create_project(
 @router.post("/generate-topology", response_model=GenerateTopologyResponse)
 async def generate_topology(
     payload: GenerateTopologyRequest,
+    _: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> GenerateTopologyResponse:
     service = ProjectService(db)
@@ -63,6 +69,7 @@ async def generate_topology(
 @router.get("/{project_id}", response_model=ProjectDetailRead)
 async def get_project(
     project_id: UUID,
+    _: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ProjectDetailRead:
     repo = ProjectRepository(db)
@@ -80,6 +87,7 @@ async def get_project(
 async def update_project(
     project_id: UUID,
     payload: ProjectUpdate,
+    _: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ProjectRead:
     repo = ProjectRepository(db)
@@ -93,6 +101,7 @@ async def update_project(
 @router.delete("/{project_id}", status_code=204)
 async def delete_project(
     project_id: UUID,
+    _: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> None:
     repo = ProjectRepository(db)
@@ -102,10 +111,22 @@ async def delete_project(
     await repo.delete(project)
 
 
+@router.put("/{project_id}/topology", response_model=GenerateTopologyResponse)
+async def update_topology(
+    project_id: UUID,
+    payload: UpdateTopologyRequest,
+    _: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> GenerateTopologyResponse:
+    service = ProjectService(db)
+    return await service.update_topology_manual(project_id, payload)
+
+
 @router.post("/{project_id}/calculate-cost", response_model=CalculateCostResponse)
 async def calculate_cost(
     project_id: UUID,
     payload: CalculateCostRequest,
+    _: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> CalculateCostResponse:
     service = ProjectService(db)

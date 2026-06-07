@@ -1,10 +1,13 @@
 import { create } from "zustand";
 
+import type { ExtractedRequirements } from "@/lib/api/consultation";
+import { applyConsultationPlan } from "@/lib/api/consultation";
 import {
   calculateCost,
   generateTopology,
   getProject,
   updateProject,
+  updateTopology,
 } from "@/lib/api/projects";
 import type {
   CalculateCostResponse,
@@ -25,13 +28,29 @@ interface ProjectStore {
   isGenerating: boolean;
   isCalculating: boolean;
   isSaving: boolean;
+  isSavingTopology: boolean;
+  topologyEditMode: boolean;
   error: string | null;
 
   setProject: (project: Project) => void;
   setParams: (params: Partial<DesignerParams>) => void;
+  applyExtractedRequirements: (extracted: ExtractedRequirements) => void;
+  applyExtractedAndGenerateTopology: (extracted: ExtractedRequirements) => Promise<void>;
+  setTopologyEditMode: (enabled: boolean) => void;
+  updateTopologyCounts: (partial: {
+    servers?: number;
+    gpus?: number;
+    leaf_switches?: number;
+    spine_switches?: number;
+    storage_nodes?: number;
+  }) => void;
   loadProject: (projectId: string) => Promise<void>;
   saveProject: () => Promise<void>;
   runGenerateTopology: () => Promise<void>;
+  saveTopologyManual: (graphLayout?: {
+    nodes: { id: string; position: { x: number; y: number } }[];
+    edges: { id: string; source: string; target: string }[];
+  }) => Promise<void>;
   runCalculateCost: () => Promise<void>;
   updateBomQuantity: (index: number, quantity: number) => void;
   reset: () => void;
@@ -56,6 +75,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   isGenerating: false,
   isCalculating: false,
   isSaving: false,
+  isSavingTopology: false,
+  topologyEditMode: false,
   error: null,
 
   setProject: (project) => {
@@ -71,6 +92,102 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   setParams: (partial) => {
     set({ params: { ...get().params, ...partial } });
+  },
+
+  applyExtractedRequirements: (extracted) => {
+    const partial: Partial<DesignerParams> = {};
+    if (extracted.target_gpus) partial.target_gpus = extracted.target_gpus;
+    if (extracted.scenario) partial.scenario = extracted.scenario;
+    if (extracted.gpus_per_node) partial.gpus_per_node = extracted.gpus_per_node;
+    if (extracted.switch_ports) partial.switch_ports = extracted.switch_ports;
+    if (extracted.network_arch) partial.network_arch = extracted.network_arch as DesignerParams["network_arch"];
+    if (extracted.free_scheduler_with_server != null) {
+      partial.free_scheduler_with_server = extracted.free_scheduler_with_server;
+    }
+    set({ params: { ...get().params, ...partial } });
+    const project = get().project;
+    if (project && extracted.project_name) {
+      set({ project: { ...project, name: extracted.project_name } });
+    }
+  },
+
+  applyExtractedAndGenerateTopology: async (extracted) => {
+    const project = get().project;
+    if (!project) return;
+
+    set({ isGenerating: true, error: null });
+    try {
+      const result = await applyConsultationPlan({
+        extracted,
+        project_id: project.id,
+        requirement_text: extracted.scheme_summary ?? extracted.description ?? undefined,
+      });
+
+      get().applyExtractedRequirements(extracted);
+
+      const topologyResult = result.topology_result;
+      if (topologyResult) {
+        const bom: PreliminaryBOMItem[] = topologyResult.bom.map((item) => ({
+          sku_id: item.sku_id,
+          category: item.category,
+          model: item.model,
+          quantity: item.quantity,
+          unit_price: Number(item.unit_price),
+          total_price: Number(item.total_price),
+          cost_dimension: item.cost_dimension as PreliminaryBOMItem["cost_dimension"],
+        }));
+        const topology: GenerateTopologyResponse = {
+          compute: topologyResult.compute,
+          network: topologyResult.network,
+          storage: topologyResult.storage,
+          bom,
+          topology: topologyResult.topology,
+        };
+        set({
+          project: {
+            ...project,
+            name: result.project_name,
+            target_gpus: extracted.target_gpus ?? project.target_gpus,
+            scenario: extracted.scenario ?? project.scenario,
+          },
+          topology,
+          bom,
+          isGenerating: false,
+        });
+      } else {
+        await get().runGenerateTopology();
+      }
+    } catch (err) {
+      set({
+        isGenerating: false,
+        error: err instanceof Error ? err.message : "应用方案失败",
+      });
+      throw err;
+    }
+  },
+
+  setTopologyEditMode: (enabled) => set({ topologyEditMode: enabled }),
+
+  updateTopologyCounts: (partial) => {
+    const topology = get().topology;
+    if (!topology) return;
+    set({
+      topology: {
+        ...topology,
+        compute: {
+          servers: partial.servers ?? topology.compute.servers,
+          gpus: partial.gpus ?? topology.compute.gpus,
+        },
+        network: {
+          ...topology.network,
+          leaf_switches: partial.leaf_switches ?? topology.network.leaf_switches,
+          spine_switches: partial.spine_switches ?? topology.network.spine_switches,
+        },
+        storage: {
+          nodes: partial.storage_nodes ?? topology.storage.nodes,
+        },
+      },
+    });
   },
 
   loadProject: async (projectId) => {
@@ -146,6 +263,37 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       set({
         isSaving: false,
         error: err instanceof Error ? err.message : "保存失败",
+      });
+    }
+  },
+
+  saveTopologyManual: async (graphLayout) => {
+    const { project, topology, params } = get();
+    if (!project || !topology) return;
+
+    set({ isSavingTopology: true, error: null });
+    try {
+      const result = await updateTopology(project.id, {
+        compute: topology.compute,
+        network: topology.network,
+        storage: topology.storage,
+        graph_layout: graphLayout,
+        scenario: params.scenario,
+      });
+      set({
+        topology: result,
+        bom: result.bom.map((item) => ({
+          ...item,
+          unit_price: Number(item.unit_price),
+          total_price: Number(item.total_price),
+        })),
+        isSavingTopology: false,
+        topologyEditMode: false,
+      });
+    } catch (err) {
+      set({
+        isSavingTopology: false,
+        error: err instanceof Error ? err.message : "拓扑保存失败",
       });
     }
   },
@@ -243,6 +391,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       isGenerating: false,
       isCalculating: false,
       isSaving: false,
+      isSavingTopology: false,
+      topologyEditMode: false,
       error: null,
     });
   },

@@ -3,9 +3,16 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.database import Base, get_db
+from app.core.security import hash_password
+import app.models  # noqa: F401 — register all ORM models
 from app.main import app
+from app.models.user import UserRole
+from app.repositories.user_repository import UserRepository
+from app.schemas.auth import UserCreate
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+TEST_ADMIN_EMAIL = "admin@example.com"
+TEST_ADMIN_PASSWORD = "admin123"
 
 
 @pytest.fixture
@@ -17,6 +24,17 @@ async def db_session():
         await conn.run_sync(Base.metadata.create_all)
 
     async with session_factory() as session:
+        repo = UserRepository(session)
+        await repo.create(
+            UserCreate(
+                email=TEST_ADMIN_EMAIL,
+                display_name="Test Admin",
+                password=TEST_ADMIN_PASSWORD,
+                role=UserRole.ADMIN,
+            ),
+            hashed_password=hash_password(TEST_ADMIN_PASSWORD),
+        )
+        await session.commit()
         yield session
 
     await engine.dispose()
@@ -40,7 +58,18 @@ async def client(db_session: AsyncSession):
 
 
 @pytest.fixture
-async def seed_skus(client: AsyncClient):
+async def auth_headers(client: AsyncClient):
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={"email": TEST_ADMIN_EMAIL, "password": TEST_ADMIN_PASSWORD},
+    )
+    assert response.status_code == 200
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+async def seed_skus(client: AsyncClient, auth_headers: dict):
     payload = {
         "items": [
             {
@@ -94,6 +123,6 @@ async def seed_skus(client: AsyncClient):
             },
         ]
     }
-    response = await client.post("/api/v1/catalog/skus/batch-import", json=payload)
+    response = await client.post("/api/v1/catalog/skus/batch-import", json=payload, headers=auth_headers)
     assert response.status_code == 201
     return response.json()

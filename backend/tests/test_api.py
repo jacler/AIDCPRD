@@ -10,7 +10,7 @@ async def test_health(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_generate_topology_512(client: AsyncClient):
+async def test_generate_topology_512(client: AsyncClient, auth_headers: dict):
     response = await client.post(
         "/api/v1/projects/generate-topology",
         json={
@@ -18,6 +18,7 @@ async def test_generate_topology_512(client: AsyncClient):
             "scenario": "TRAINING",
             "network_arch": "FAT_TREE",
         },
+        headers=auth_headers,
     )
     assert response.status_code == 200
     data = response.json()
@@ -30,7 +31,7 @@ async def test_generate_topology_512(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_sku_catalog_crud(client: AsyncClient):
+async def test_sku_catalog_crud(client: AsyncClient, auth_headers: dict):
     create_resp = await client.post(
         "/api/v1/catalog/skus",
         json={
@@ -41,30 +42,34 @@ async def test_sku_catalog_crud(client: AsyncClient):
             "base_price": "100000.00",
             "cost_dimension": "COMPUTE",
         },
+        headers=auth_headers,
     )
     assert create_resp.status_code == 201
     sku_id = create_resp.json()["id"]
 
-    list_resp = await client.get("/api/v1/catalog/skus", params={"category": "GPU"})
+    list_resp = await client.get(
+        "/api/v1/catalog/skus", params={"category": "GPU"}, headers=auth_headers
+    )
     assert list_resp.status_code == 200
     assert list_resp.json()["total"] >= 1
 
-    get_resp = await client.get(f"/api/v1/catalog/skus/{sku_id}")
+    get_resp = await client.get(f"/api/v1/catalog/skus/{sku_id}", headers=auth_headers)
     assert get_resp.status_code == 200
 
     update_resp = await client.put(
         f"/api/v1/catalog/skus/{sku_id}",
         json={"channel_price": "95000.00"},
+        headers=auth_headers,
     )
     assert update_resp.status_code == 200
     assert update_resp.json()["channel_price"] == "95000.00"
 
-    delete_resp = await client.delete(f"/api/v1/catalog/skus/{sku_id}")
+    delete_resp = await client.delete(f"/api/v1/catalog/skus/{sku_id}", headers=auth_headers)
     assert delete_resp.status_code == 204
 
 
 @pytest.mark.asyncio
-async def test_project_lifecycle_and_cost(client: AsyncClient, seed_skus):
+async def test_project_lifecycle_and_cost(client: AsyncClient, seed_skus, auth_headers: dict):
     skus = seed_skus
 
     project_resp = await client.post(
@@ -74,6 +79,7 @@ async def test_project_lifecycle_and_cost(client: AsyncClient, seed_skus):
             "target_gpus": 512,
             "scenario": "TRAINING",
         },
+        headers=auth_headers,
     )
     assert project_resp.status_code == 201
     project_id = project_resp.json()["id"]
@@ -86,6 +92,7 @@ async def test_project_lifecycle_and_cost(client: AsyncClient, seed_skus):
             "network_arch": "FAT_TREE",
             "project_id": project_id,
         },
+        headers=auth_headers,
     )
     assert topo_resp.status_code == 200
 
@@ -108,6 +115,7 @@ async def test_project_lifecycle_and_cost(client: AsyncClient, seed_skus):
             ],
             "pricing_rules": {"free_scheduler_with_server": True},
         },
+        headers=auth_headers,
     )
     assert cost_resp.status_code == 200
     data = cost_resp.json()
@@ -115,6 +123,6 @@ async def test_project_lifecycle_and_cost(client: AsyncClient, seed_skus):
     assert data["cost_breakdown"]["total"] > 0
     assert len(data["bom"]) == 6
 
-    detail_resp = await client.get(f"/api/v1/projects/{project_id}")
+    detail_resp = await client.get(f"/api/v1/projects/{project_id}", headers=auth_headers)
     assert detail_resp.status_code == 200
     assert detail_resp.json()["status"] == "COMPLETED"

@@ -40,7 +40,15 @@ function rowPositions(count: number, spacing: number, startX: number): number[] 
   return Array.from({ length: count }, (_, i) => offset + i * spacing);
 }
 
-export function buildFatTreeGraph(topology: GenerateTopologyResponse): {
+type GraphLayout = {
+  nodes?: { id: string; position: { x: number; y: number } }[];
+  edges?: { id: string; source: string; target: string }[];
+};
+
+export function buildFatTreeGraph(
+  topology: GenerateTopologyResponse,
+  savedLayout?: GraphLayout | null
+): {
   nodes: Node[];
   edges: Edge[];
 } {
@@ -154,6 +162,27 @@ export function buildFatTreeGraph(topology: GenerateTopologyResponse): {
     },
     draggable: false,
   });
+
+  if (savedLayout?.nodes?.length) {
+    const posMap = new Map(savedLayout.nodes.map((n) => [n.id, n.position]));
+    for (const node of nodes) {
+      const saved = posMap.get(node.id);
+      if (saved) node.position = saved;
+    }
+  }
+
+  if (savedLayout?.edges?.length) {
+    return {
+      nodes,
+      edges: savedLayout.edges.map((e) => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        style: { stroke: "hsl(221 83% 53%)", strokeWidth: 1.5 },
+        markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 },
+      })),
+    };
+  }
 
   return { nodes, edges };
 }

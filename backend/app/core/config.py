@@ -22,6 +22,14 @@ class Settings(BaseSettings):
 
     cors_origins: List[str] = ["http://localhost:3000"]
 
+    jwt_secret_key: str = "aidc-costpro-dev-secret-change-in-production"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60 * 24
+
+    admin_email: str = "admin@example.com"
+    admin_password: str = "admin123"
+    admin_display_name: str = "系统管理员"
+
 
 @lru_cache
 def get_settings() -> Settings:

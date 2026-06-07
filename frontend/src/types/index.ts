@@ -23,6 +23,18 @@ export type CostDimension =
   | "SOFTWARE"
   | "INFRA";
 
+export type UserRole = "ADMIN" | "USER";
+
+export interface UserAccount {
+  id: string;
+  email: string;
+  display_name: string;
+  role: UserRole;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface SKUCatalog {
   id: string;
   category: SKUCategory;

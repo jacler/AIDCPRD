@@ -3,16 +3,28 @@ from collections.abc import AsyncIterator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.database import Base, engine
+from app.core.database import AsyncSessionLocal, Base, engine
 from app.api.v1.router import api_router
+from app.services.seed_service import seed_admin_user, seed_default_skus
+from app.repositories.app_settings_repository import AppSettingsRepository
+from app.services.consultation_config import seed_consultation_settings
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    settings = get_settings()
+    async with AsyncSessionLocal() as session:
+        await seed_admin_user(session, settings)
+        await seed_default_skus(session)
+        await seed_consultation_settings(AppSettingsRepository(session))
+        await session.commit()
+
     yield
     await engine.dispose()
 
