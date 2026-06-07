@@ -1,0 +1,115 @@
+[
+  {
+    "model": "8-GPU Training Server",
+    "type": "gpu_server",
+    "vendor": "Generic",
+    "gpu_count": 8,
+    "nic": "4x400G SR4",
+    "public": true,
+    "source": "data/public_sources/servers/gpu_node_8x.json",
+    "reference_url": null
+  },
+  {
+    "model": "NVIDIA H100 SXM 80G",
+    "type": "gpu",
+    "vendor": "NVIDIA",
+    "gpu_count": 8,
+    "nic": "8x400G IB",
+    "public": true,
+    "source": "data/public_sources/gpus/nvidia_h100_sxm.json",
+    "reference_url": "https://www.nvidia.com/en-us/data-center/h100/"
+  },
+  {
+    "model": "NVIDIA H800 80G",
+    "type": "gpu",
+    "vendor": "NVIDIA",
+    "gpu_count": 8,
+    "nic": "8x400G RoCE",
+    "public": true,
+    "source": "data/public_sources/gpus/nvidia_h800_80g.json",
+    "reference_url": null
+  },
+  {
+    "model": "NVIDIA Spectrum-4 SN5600",
+    "type": "spine_switch",
+    "vendor": "NVIDIA",
+    "ports": "64x400G",
+    "public": true,
+    "source": "data/public_sources/switches/nvidia_sn5600.json",
+    "reference_url": null
+  },
+  {
+    "model": "NVIDIA Quantum-2 QM9700",
+    "type": "leaf_switch",
+    "vendor": "NVIDIA",
+    "ports": "64x400G IB",
+    "public": true,
+    "source": "data/public_sources/switches/nvidia_qm9700.json",
+    "reference_url": null
+  },
+  {
+    "model": "Arista 7800R3",
+    "type": "core_switch",
+    "vendor": "Arista",
+    "ports": "576x400G",
+    "public": true,
+    "source": "data/public_sources/switches/arista_7800r3.json",
+    "reference_url": null
+  },
+  {
+    "model": "Ascend 910B",
+    "type": "gpu_server",
+    "vendor": "Huawei",
+    "gpu_count": 8,
+    "nic": "8x400G RoCE",
+    "public": true,
+    "source": "data/public_sources/compatibility/domestic_replacements.json",
+    "reference_url": null
+  },
+  {
+    "model": "Parallel File Storage Node",
+    "type": "storage",
+    "vendor": "Generic",
+    "protocol": "NVMe-oF RDMA",
+    "public": true,
+    "source": "Industry reference — parallel filesystem appliance",
+    "reference_url": null
+  },
+  {
+    "model": "Management Switch 25G",
+    "type": "mgmt_switch",
+    "vendor": "Generic",
+    "ports": "48x25G OOB",
+    "public": true,
+    "source": "Industry reference — out-of-band management",
+    "reference_url": null
+  },
+  {
+    "model": "R5500 G6",
+    "type": "gpu_server",
+    "gpu_count": 8,
+    "nic": "4x400G SR4",
+    "public": false,
+    "internal_only": true,
+    "public_equivalent": "8-GPU Training Server",
+    "source": null
+  },
+  {
+    "model": "S9850-32H",
+    "type": "spine_switch",
+    "ports": "32x400G",
+    "public": false,
+    "internal_only": true,
+    "public_equivalent": "NVIDIA Spectrum-4 SN5600",
+    "source": null
+  },
+  {
+    "model": "S9827X",
+    "type": "leaf_switch",
+    "ports": "64x400G",
+    "public": false,
+    "internal_only": true,
+    "public_equivalent": "NVIDIA Quantum-2 QM9700",
+    "source": null
+  }
+]

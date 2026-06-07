@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BarChart3, Expand } from "lucide-react";
 
 import { CostWaterfall } from "@/components/CostWaterfall";
+import { ArchitectureDiagramPanel } from "@/components/designer/architecture-diagram-panel";
 import { BOMTable } from "@/components/designer/bom-table";
 import { CostSummary } from "@/components/designer/cost-summary";
 import { Button } from "@/components/ui/button";
@@ -16,11 +17,25 @@ interface DesignerRightPanelProps {
 
 export function DesignerRightPanel({ projectId }: DesignerRightPanelProps) {
   const costBreakdown = useProjectStore((s) => s.costBreakdown);
+  const project = useProjectStore((s) => s.project);
+  const topology = useProjectStore((s) => s.topology);
 
   return (
     <aside className="flex w-[440px] shrink-0 flex-col overflow-y-auto border-l bg-background">
       <BOMTable />
       <Separator />
+      {topology && project && (
+        <>
+          <div className="p-4">
+            <ArchitectureDiagramPanel
+              projectId={projectId}
+              projectName={project.name}
+              targetGpus={project.target_gpus}
+            />
+          </div>
+          <Separator />
+        </>
+      )}
       <CostSummary />
       {costBreakdown && (
         <>

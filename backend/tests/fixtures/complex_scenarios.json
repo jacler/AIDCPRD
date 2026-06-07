@@ -1,0 +1,50 @@
+{
+  "scenarios": [
+    {
+      "id": "h800_roce_2048",
+      "name": "2048卡 H800 + 400G RoCE + 全闪并行文件存储",
+      "requirement": "2048卡 H800 预训练 400G RoCE 全闪存",
+      "target_gpus": 2048,
+      "scenario": "TRAINING",
+      "expected_pattern": "rail_optimized",
+      "liquid_cooling": true,
+      "device_overrides": {"gpu_server": "NVIDIA H800 80G"}
+    },
+    {
+      "id": "domestic_ascend",
+      "name": "信创昇腾910B + 国产交换机 + 分布式存储",
+      "requirement": "信创国产化 昇腾910B 训练集群",
+      "target_gpus": 512,
+      "scenario": "TRAINING",
+      "expected_pattern": "rail_optimized",
+      "domestic_mode": true,
+      "expect_compliance_hint": true
+    },
+    {
+      "id": "legacy_room_cooling",
+      "name": "老旧机房改造 · 液冷/风冷分区",
+      "requirement": "老旧机房改造 功率密度不均 液冷风冷混合",
+      "target_gpus": 256,
+      "scenario": "MIXED",
+      "expected_pattern": "hybrid_campus",
+      "liquid_cooling": true
+    },
+    {
+      "id": "hybrid_cloud",
+      "name": "多云互联 · 本地智算 + 公有云弹性池",
+      "requirement": "训推一体园区 多云混合 本地智算中心加公有云",
+      "target_gpus": 128,
+      "scenario": "MIXED",
+      "expected_pattern": "hybrid_campus"
+    },
+    {
+      "id": "poc_8gpu",
+      "name": "极简 POC · 8卡单机直连存储",
+      "requirement": "POC验证 8卡单机 企业级推理",
+      "target_gpus": 8,
+      "scenario": "INFERENCE",
+      "expected_pattern": "fat_tree_inference",
+      "max_spine_nodes": 2
+    }
+  ]
+}

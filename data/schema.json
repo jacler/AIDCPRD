@@ -148,6 +148,31 @@
         },
         "disclaimer": { "type": "string" }
       }
+    },
+    "ArchPattern": {
+      "type": "object",
+      "required": ["pattern_id", "display_name", "use_case", "key_visual_rules"],
+      "properties": {
+        "pattern_id": { "type": "string", "enum": ["rail_optimized", "fat_tree", "hybrid"] },
+        "display_name": { "type": "string" },
+        "use_case": { "type": "string" },
+        "key_visual_rules": { "type": "object" },
+        "compliance_notes": { "type": "string" }
+      }
+    },
+    "ArchitectureDiagram": {
+      "type": "object",
+      "required": ["pattern_id", "mermaid_code", "convergence_ratio"],
+      "properties": {
+        "pattern_id": { "type": "string" },
+        "mermaid_code": { "type": "string" },
+        "convergence_ratio": { "type": "string" },
+        "design_points": { "type": "array", "items": { "type": "string" } },
+        "validation_issues": { "type": "array" },
+        "export_mode": { "type": "string", "enum": ["ppt_ready", "doc_embed", "web_interactive"] },
+        "figure_caption": { "type": "string" },
+        "data_disclaimer": { "type": "string" }
+      }
     }
   }
 }
